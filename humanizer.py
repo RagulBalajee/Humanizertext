@@ -30,6 +30,11 @@ except Exception:
 _ensure_nltk_resource("corpora/wordnet")
 # averaged perceptron tagger
 _ensure_nltk_resource("taggers/averaged_perceptron_tagger")
+# some environments require the ENG-named tagger
+try:
+    _ensure_nltk_resource("taggers/averaged_perceptron_tagger_eng", downloader_name="averaged_perceptron_tagger_eng")
+except Exception:
+    pass
 
 # Safe sentence tokenizer with fallback to regex
 def _safe_sent_tokenize(text: str) -> list[str]:
@@ -39,6 +44,14 @@ def _safe_sent_tokenize(text: str) -> list[str]:
         # Fallback: split on sentence end punctuation followed by space/newline
         parts = re.split(r"(?<=[.!?])\s+", text.strip())
         return [p for p in parts if p]
+
+# Safe word tokenizer with fallback
+def _safe_word_tokenize(text: str) -> list[str]:
+    try:
+        return word_tokenize(text)
+    except Exception:
+        tokens = re.findall(r"\w+|[^\w\s]", text)
+        return tokens if tokens else text.split()
 
 class TextHumanizer:
     def __init__(self, target_similarity_range=(0.00, 0.49)):
@@ -336,8 +349,11 @@ class TextHumanizer:
             # Step 2: Apply aggressive word-level transformations
             transformed_sentences = []
             for sentence in sentences:
-                words = word_tokenize(sentence)
-                pos_tags = nltk.pos_tag(words)
+                words = _safe_word_tokenize(sentence)
+                try:
+                    pos_tags = nltk.pos_tag(words)
+                except Exception:
+                    pos_tags = [(w, None) for w in words]
                 
                 new_words = []
                 for word, pos_tag in pos_tags:
