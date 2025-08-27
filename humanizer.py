@@ -7,11 +7,29 @@ from nltk.tokenize import sent_tokenize, word_tokenize
 from difflib import SequenceMatcher
 import string
 
-# Make sure required NLTK data is downloaded
-nltk.download("punkt", quiet=True)
-nltk.download("punkt_tab", quiet=True)
-nltk.download("wordnet", quiet=True)
-nltk.download("averaged_perceptron_tagger", quiet=True)
+# Ensure required NLTK data is available on platforms like Render
+def _ensure_nltk_resource(resource: str, downloader_name: str | None = None) -> None:
+    try:
+        nltk.data.find(resource)
+    except LookupError:
+        try:
+            nltk.download((downloader_name or resource.split("/")[1]), quiet=True)
+        except Exception:
+            # As a last resort, ignore to avoid hard crash; tokenizer will re-attempt
+            pass
+
+# punkt (sentence tokenizer)
+_ensure_nltk_resource("tokenizers/punkt")
+# punkt_tab (newer NLTK split)
+try:
+    _ensure_nltk_resource("tokenizers/punkt_tab/english", downloader_name="punkt_tab")
+except Exception:
+    # Older NLTK may not have punkt_tab; ignore
+    pass
+# wordnet
+_ensure_nltk_resource("corpora/wordnet")
+# averaged perceptron tagger
+_ensure_nltk_resource("taggers/averaged_perceptron_tagger")
 
 class TextHumanizer:
     def __init__(self, target_similarity_range=(0.50, 0.55)):
