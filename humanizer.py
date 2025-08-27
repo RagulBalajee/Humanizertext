@@ -9,6 +9,7 @@ import string
 
 # Make sure required NLTK data is downloaded
 nltk.download("punkt", quiet=True)
+nltk.download("punkt_tab", quiet=True)
 nltk.download("wordnet", quiet=True)
 nltk.download("averaged_perceptron_tagger", quiet=True)
 
