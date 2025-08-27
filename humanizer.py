@@ -31,6 +31,15 @@ _ensure_nltk_resource("corpora/wordnet")
 # averaged perceptron tagger
 _ensure_nltk_resource("taggers/averaged_perceptron_tagger")
 
+# Safe sentence tokenizer with fallback to regex
+def _safe_sent_tokenize(text: str) -> list[str]:
+    try:
+        return sent_tokenize(text)
+    except Exception:
+        # Fallback: split on sentence end punctuation followed by space/newline
+        parts = re.split(r"(?<=[.!?])\s+", text.strip())
+        return [p for p in parts if p]
+
 class TextHumanizer:
     def __init__(self, target_similarity_range=(0.50, 0.55)):
         self.target_similarity_range = target_similarity_range
@@ -322,7 +331,7 @@ class TextHumanizer:
         # Multiple transformation attempts to achieve target similarity
         for attempt in range(15):
             # Step 1: Break into sentences
-            sentences = sent_tokenize(original_text)
+            sentences = _safe_sent_tokenize(original_text)
             
             # Step 2: Apply aggressive word-level transformations
             transformed_sentences = []
@@ -415,7 +424,7 @@ class TextHumanizer:
     
     def reorder_sentences(self, text):
         """Randomly reorder sentences to reduce similarity"""
-        sentences = sent_tokenize(text)
+        sentences = _safe_sent_tokenize(text)
         if len(sentences) > 1:
             random.shuffle(sentences)
         return " ".join(sentences)
