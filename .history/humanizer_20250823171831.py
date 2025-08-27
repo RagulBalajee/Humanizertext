@@ -1,0 +1,44 @@
+import os
+import random
+from transformers import pipeline
+
+# 🔹 Force transformers to use PyTorch only (no TensorFlow)
+os.environ["USE_TF"] = "0"
+os.environ["TRANSFORMERS_NO_TF"] = "1"
+
+# Load a pre-trained paraphrasing model (T5 small fine-tuned for paraphrasing)
+# First run will download the model (~200MB)
+paraphraser = pipeline("text2text-generation", model="Vamsi/T5_Paraphrase_Paws")
+
+def humanize_text(text: str, tone: str = "casual") -> str:
+    """
+    Takes AI-generated text and returns a humanized version.
+    Supports tone adjustment: casual, formal, storytelling.
+    """
+
+    if not text.strip():
+        return "⚠️ Empty input provided. Please enter some text."
+
+    # Step 1: Generate multiple paraphrases
+    paraphrases = paraphraser(
+        text,                         # ✅ FIXED (was 'prompt')
+        max_length=256,
+        num_return_sequences=4,
+        num_beams=4,
+        do_sample=True
+    )
+
+    # Step 2: Pick one paraphrased version randomly
+    result = random.choice(paraphrases)["generated_text"]
+
+    # Step 3: Add natural connectors depending on tone
+    connectors = {
+        "casual": ["Honestly,", "You know,", "Well,", "To be real,"],
+        "formal": ["In fact,", "Notably,", "Furthermore,", "Interestingly,"],
+        "storytelling": ["Once upon a time,", "Back in the day,", "Surprisingly,"]
+    }
+
+    if random.random() > 0.5 and tone in connectors:
+        result = random.choice(connectors[tone]) + " " + result
+
+    return result
