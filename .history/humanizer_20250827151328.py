@@ -31,15 +31,6 @@ _ensure_nltk_resource("corpora/wordnet")
 # averaged perceptron tagger
 _ensure_nltk_resource("taggers/averaged_perceptron_tagger")
 
-# Safe sentence tokenizer with fallback to regex
-def _safe_sent_tokenize(text: str) -> list[str]:
-    try:
-        return sent_tokenize(text)
-    except Exception:
-        # Fallback: split on sentence end punctuation followed by space/newline
-        parts = re.split(r"(?<=[.!?])\s+", text.strip())
-        return [p for p in parts if p]
-
 class TextHumanizer:
     def __init__(self, target_similarity_range=(0.50, 0.55)):
         self.target_similarity_range = target_similarity_range
@@ -86,12 +77,12 @@ class TextHumanizer:
             synsets = wordnet.synsets(word)
             
         if not synsets:
-        return word
+            return word
             
         # Get all possible synonyms
         synonyms = set()
         for syn in synsets:
-        for lemma in syn.lemmas():
+            for lemma in syn.lemmas():
                 if lemma.name().lower() != word.lower() and len(lemma.name()) > 2:
                     synonyms.add(lemma.name().replace("_", " "))
         
@@ -331,23 +322,23 @@ class TextHumanizer:
         # Multiple transformation attempts to achieve target similarity
         for attempt in range(15):
             # Step 1: Break into sentences
-            sentences = _safe_sent_tokenize(original_text)
+            sentences = sent_tokenize(original_text)
             
             # Step 2: Apply aggressive word-level transformations
             transformed_sentences = []
-    for sentence in sentences:
-        words = word_tokenize(sentence)
+            for sentence in sentences:
+                words = word_tokenize(sentence)
                 pos_tags = nltk.pos_tag(words)
                 
-        new_words = []
+                new_words = []
                 for word, pos_tag in pos_tags:
                     # Much higher probability of synonym replacement
                     if word.isalpha() and len(word) > 3 and random.random() < 0.7:
                         new_word = self.synonym_replace(word, pos_tag)
                         new_words.append(new_word)
-            else:
-                new_words.append(word)
-
+                    else:
+                        new_words.append(word)
+                
                 # Add filler words more frequently
                 if random.random() < 0.6:
                     filler = random.choice(self.filler_words)
@@ -424,7 +415,7 @@ class TextHumanizer:
     
     def reorder_sentences(self, text):
         """Randomly reorder sentences to reduce similarity"""
-        sentences = _safe_sent_tokenize(text)
+        sentences = sent_tokenize(text)
         if len(sentences) > 1:
             random.shuffle(sentences)
         return " ".join(sentences)

@@ -86,12 +86,12 @@ class TextHumanizer:
             synsets = wordnet.synsets(word)
             
         if not synsets:
-        return word
+            return word
             
         # Get all possible synonyms
         synonyms = set()
         for syn in synsets:
-        for lemma in syn.lemmas():
+            for lemma in syn.lemmas():
                 if lemma.name().lower() != word.lower() and len(lemma.name()) > 2:
                     synonyms.add(lemma.name().replace("_", " "))
         
@@ -335,19 +335,19 @@ class TextHumanizer:
             
             # Step 2: Apply aggressive word-level transformations
             transformed_sentences = []
-    for sentence in sentences:
-        words = word_tokenize(sentence)
+            for sentence in sentences:
+                words = word_tokenize(sentence)
                 pos_tags = nltk.pos_tag(words)
                 
-        new_words = []
+                new_words = []
                 for word, pos_tag in pos_tags:
                     # Much higher probability of synonym replacement
                     if word.isalpha() and len(word) > 3 and random.random() < 0.7:
                         new_word = self.synonym_replace(word, pos_tag)
                         new_words.append(new_word)
-            else:
-                new_words.append(word)
-
+                    else:
+                        new_words.append(word)
+                
                 # Add filler words more frequently
                 if random.random() < 0.6:
                     filler = random.choice(self.filler_words)
